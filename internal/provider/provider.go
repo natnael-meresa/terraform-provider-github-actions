@@ -78,7 +78,7 @@ func (p *GithubActionsProvider) EphemeralResources(ctx context.Context) []func()
 
 func (p *GithubActionsProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewExampleDataSource,
+		NewVariableDataSource,
 	}
 }
 
