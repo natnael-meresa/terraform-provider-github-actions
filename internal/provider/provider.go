@@ -5,16 +5,19 @@ package provider
 
 import (
 	"context"
-	"net/http"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
 	"github.com/hashicorp/terraform-plugin-framework/function"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/natnael-meresa/terraform-provider-github-actions/internal/client"
 )
 
 // Ensure GitHubActionsProvider satisfies various provider interfaces.
@@ -57,13 +60,21 @@ func (p *GithubActionsProvider) Configure(ctx context.Context, req provider.Conf
 		return
 	}
 
-	// Configuration values are now available.
-	// if data.Endpoint.IsNull() { /* ... */ }
-
-	// Example client configuration for data sources and resources
-	client := http.DefaultClient
+	// read access token from environment variable
+	accessToken := os.Getenv("GITHUB_ACCESS_TOKEN")
+	if accessToken == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("access_token"),
+			"Missing Environment Variable",
+			"Please set GITHUB_ACCESS_TOKEN environment variable",
+		)
+		return
+	}
+	client := client.NewClient(accessToken)
 	resp.DataSourceData = client
 	resp.ResourceData = client
+
+	tflog.Info(ctx, "Configured Github client")
 }
 
 func (p *GithubActionsProvider) Resources(ctx context.Context) []func() resource.Resource {
